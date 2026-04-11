@@ -27,6 +27,8 @@ MemPalace (L2) ── semantic search ──→ Answer from raw conversations
 
 ### 1. Install MemPalace + copy Goldfish template
 
+**Requires Python 3.9–3.13** (ChromaDB is incompatible with Python 3.14).
+
 ```bash
 # Install MemPalace
 pip install mempalace
@@ -39,11 +41,15 @@ cd ~/projects/your-project/
 mempalace init .
 
 # Connect MemPalace to Claude Code (19 MCP tools)
+# Use the same Python that has mempalace installed:
 claude mcp add mempalace -- python -m mempalace.mcp_server
 
 # Or via the Claude Code marketplace:
 # claude plugin marketplace add milla-jovovich/mempalace
 # claude plugin install --scope user mempalace
+
+# Note: if you have multiple Python versions, specify the path:
+# claude mcp add mempalace -- /path/to/python3.10 -m mempalace.mcp_server
 ```
 
 That's it. Claude Code now reads `CLAUDE.md` (wiki routing rules) and has access to MemPalace's 19 MCP tools. Both layers are live.

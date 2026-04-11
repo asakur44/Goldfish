@@ -1,6 +1,10 @@
 # MemPalace local state (ChromaDB binaries, resolution logs)
 .mempalace/
 
+# MemPalace init-generated config (each user generates their own)
+mempalace.yaml
+entities.json
+
 # Ephemeral metrics (not knowledge, not in git)
 wiki/.metrics/
 
