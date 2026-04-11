@@ -1,0 +1,14 @@
+# MemPalace local state (ChromaDB binaries, resolution logs)
+.mempalace/
+
+# Ephemeral metrics (not knowledge, not in git)
+wiki/.metrics/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
