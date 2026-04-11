@@ -1,19 +1,52 @@
-# L1/L2 Memory System
+# Goldfish
 
-A two-tier memory system for AI-assisted development. Your curated wiki (L1) answers 80% of questions instantly. MemPalace (L2) stores raw conversations for the other 20%.
+A memory system for AI-assisted development, built on [MemPalace](https://github.com/milla-jovovich/mempalace).
 
-The core idea: **store everything in L2, curate the best into L1, and let the LLM navigate both.**
+**L1 Wiki** (curated markdown) answers 80% of questions instantly. **L2 MemPalace** (ChromaDB) stores raw conversations for the other 20%. Claude Code navigates both seamlessly — wiki first, MemPalace as fallback.
+
+```
+You ask a question
+    │
+    ▼
+Wiki (L1) ──── trigger match? ──── yes ──→ Answer from curated article
+    │                                        (fast, cheap, cited)
+    no
+    │
+    ▼
+MemPalace (L2) ── semantic search ──→ Answer from raw conversations
+    │                                   (19 MCP tools, knowledge graph)
+    no results
+    │
+    ▼
+"I don't have confident information on this."
+```
 
 ---
 
-## Quick Start (5 minutes)
+## Quick Start
 
-### 1. Copy the template into your project
+### 1. Install MemPalace + copy Goldfish template
 
 ```bash
-cp -r mvm-template/ ~/projects/your-project/
+# Install MemPalace
+pip install mempalace
+
+# Copy Goldfish into your project
+cp -r goldfish/ ~/projects/your-project/
 cd ~/projects/your-project/
+
+# Initialize MemPalace (creates .mempalace/ with ChromaDB)
+mempalace init .
+
+# Connect MemPalace to Claude Code (19 MCP tools)
+claude mcp add mempalace -- python -m mempalace.mcp_server
+
+# Or via the Claude Code marketplace:
+# claude plugin marketplace add milla-jovovich/mempalace
+# claude plugin install --scope user mempalace
 ```
+
+That's it. Claude Code now reads `CLAUDE.md` (wiki routing rules) and has access to MemPalace's 19 MCP tools. Both layers are live.
 
 ### 2. Fill in your identity
 
@@ -153,34 +186,85 @@ Don't write an article when:
 
 ---
 
-## Setting Up MemPalace (L2)
+## MemPalace Integration
 
-L1 (the wiki) works on its own. L2 (MemPalace) is optional but makes the system much more powerful — it lets Claude search your actual conversation history.
+MemPalace is not a separate tool — it's the L2 backing store. Goldfish's wiki (L1) sits on top of it.
+
+### How they work together
+
+| Action | Wiki (L1) | MemPalace (L2) |
+|--------|-----------|----------------|
+| Quick answer | Read `index.md` → read article | — |
+| Deep retrieval | — | `mempalace_search(query, wing)` |
+| Save a decision | Create wiki article | `mempalace_add_drawer` + `mempalace_kg_add` |
+| Track a fact | — | `mempalace_kg_add(subject, predicate, object)` |
+| Find connections | Wikilinks between articles | `mempalace_traverse` / `mempalace_find_tunnels` |
+| Check history | `wiki/log/` | `mempalace_kg_timeline(entity)` |
+| Auto-save session | — | Save hook fires every 15 messages |
+
+### The 19 MCP tools Claude uses
+
+**Read from palace:** `mempalace_status`, `mempalace_search`, `mempalace_list_wings`, `mempalace_list_rooms`, `mempalace_get_taxonomy`, `mempalace_check_duplicate`
+
+**Write to palace:** `mempalace_add_drawer`, `mempalace_delete_drawer`
+
+**Knowledge graph:** `mempalace_kg_query`, `mempalace_kg_add`, `mempalace_kg_invalidate`, `mempalace_kg_timeline`, `mempalace_kg_stats`
+
+**Navigation:** `mempalace_traverse`, `mempalace_find_tunnels`, `mempalace_graph_stats`
+
+**Agent diary:** `mempalace_diary_write`, `mempalace_diary_read`
+
+**Dialect:** `mempalace_get_aaak_spec`
+
+### Naming alignment
+
+Wiki articles and MemPalace rooms use the same names:
+- `wiki/decisions/auth-approach.md` → MemPalace `room_auth-approach` in `wing_your-project`
+- `wiki/patterns/error-handling.md` → MemPalace `room_error-handling`
+
+This means `mempalace_search(query, room="auth-approach")` returns the raw conversations that the wiki article was distilled from. L1 gives you the curated answer; L2 gives you the full context.
+
+### Auto-save hooks
+
+MemPalace's Claude Code hooks automatically capture conversations into L2:
+
+```json
+// .claude/settings.local.json
+{
+  "hooks": {
+    "Stop": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "path/to/mempalace/hooks/mempal_save_hook.sh",
+        "timeout": 30
+      }]
+    }],
+    "PreCompact": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "path/to/mempalace/hooks/mempal_precompact_hook.sh",
+        "timeout": 30
+      }]
+    }]
+  }
+}
+```
+
+Every 15 messages, the hook fires and Claude saves key topics, decisions, and quotes to MemPalace. Before context compression, an emergency save captures everything important. L2 fills up automatically — you just need to promote the best stuff to L1 wiki articles.
+
+### Mining existing conversations
 
 ```bash
-pip install mempalace
-mempalace init ~/projects/your-project
-
-# Mine your existing conversations
+# Mine conversation exports (Claude, ChatGPT, Slack)
 mempalace mine ~/chats/ --mode convos
 
-# Search anything you've discussed
-mempalace search "why did we switch to GraphQL"
-```
+# Mine project files (code, docs)
+mempalace mine ~/projects/your-project
 
-### Connect to Claude Code via MCP
-
-```bash
-claude mcp add mempalace -- python -m mempalace.mcp_server
-```
-
-Now when the wiki can't answer a question, Claude automatically searches your conversation archive.
-
-### Or via the Claude Code marketplace
-
-```bash
-claude plugin marketplace add milla-jovovich/mempalace
-claude plugin install --scope user mempalace
+# Split mega-files first if needed
+mempalace split ~/chats/ --dry-run
 ```
 
 ---
