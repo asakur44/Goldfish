@@ -4,6 +4,19 @@ A memory system for AI-assisted development, built on [MemPalace](https://github
 
 **L1 Wiki** (curated markdown) answers 80% of questions instantly. **L2 MemPalace** (ChromaDB) stores raw conversations for the other 20%. Claude Code navigates both seamlessly — wiki first, MemPalace as fallback.
 
+### Roles
+
+- **Wiki (L1) = Reference.** Factual primers on the domain. What-things-are. Public-facing knowledge.
+- **MemPalace (L2) = Institutional memory.** Decisions, rationale, strategy, deep-dives. Why-we-chose-X-over-Y. If the wiki is "here's what palm oil is," the palace is "here's why we decided not to support rubber in v1."
+
+### How they interlock
+
+- **L1 cites L2** for rationale — wiki articles link down to MemPalace rooms for the "why" behind facts
+- **L2 cites L1** for domain context — decisions reference wiki articles for background knowledge
+- **Decisions are ADRs** — dated, numbered, template-driven. Superseded explicitly, never deleted
+- **Index files are load-bearing** — `wiki/index.md` and `mempalace/index.md` must stay in sync when files land
+- **File hygiene** — lowercase-hyphens, one topic per file, split at ~300–500 lines, structured as what / why / how-to-apply / open-questions / references
+
 ```
 You ask a question
     │

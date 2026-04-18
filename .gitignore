@@ -8,6 +8,9 @@ entities.json
 # Ephemeral metrics (not knowledge, not in git)
 wiki/.metrics/
 
+# Claude Code local settings (machine-specific hook paths)
+.claude/settings.local.json
+
 # OS files
 .DS_Store
 Thumbs.db

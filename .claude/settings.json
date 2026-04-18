@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "MEMORY SYSTEM: This project uses Goldfish, a two-tier memory system. Always check wiki/index.md BEFORE calling any mempalace_ MCP tool. The wiki is L1 (fast, curated); MemPalace is L2 (raw fallback). Never skip L1."
+  ]
+}

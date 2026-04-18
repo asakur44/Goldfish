@@ -1,11 +1,21 @@
 # Goldfish Memory System — CLAUDE.md
 
+> **HARD RULE:** NEVER call `mempalace_search` or any `mempalace_` tool to answer a question before checking `wiki/index.md`. Wiki is L1 (instant, curated). MemPalace is L2 (fallback only). If the wiki answers it — stop. Do not redundantly search L2.
+
 This project uses a two-tier memory system built on MemPalace:
 
 - **L1 Wiki** (`wiki/`) — curated markdown articles for fast, cheap answers
 - **L2 MemPalace** (ChromaDB) — raw verbatim conversations for deep retrieval
 
+**Roles:**
+- **Wiki (L1) = Reference.** Factual primers on the domain. What-things-are. Public-facing knowledge.
+- **MemPalace (L2) = Institutional memory.** Decisions, rationale, strategy, deep-dives. Why-we-chose-X-over-Y.
+
 L1 is the cache. L2 is the backing store. Check the cache first.
+
+**Bidirectional citations:**
+- L1 cites L2 for rationale (e.g., a wiki article links to `mempalace://` for the decision reasoning)
+- L2 cites L1 for domain context (e.g., a decision references a wiki article for background)
 
 ---
 
@@ -127,12 +137,15 @@ Body in markdown. Sources reference MemPalace drawers or `raw/` files.
 
 ---
 
-## Naming Rules
+## Naming & File Hygiene
 
 - Name articles by what they answer: `auth-approach.md`, `why-we-chose-postgres.md`
 - Never: `notes.md`, `misc.md`, `ideas.md` — these are routing dead ends
-- Use lowercase kebab-case
+- Use lowercase-hyphens (kebab-case), one topic per file
+- Split files at ~300–500 lines — if a file grows beyond this, break it into focused subtopics
+- Every file should follow the structure: **what** / **why** / **how to apply** / **open questions** / **references**
 - Wiki article names map to MemPalace **rooms** — use the same naming where possible
+- Decisions are ADRs: dated, numbered, template-driven. Supersession is marked explicitly, never deleted
 
 ---
 
@@ -148,6 +161,23 @@ Body in markdown. Sources reference MemPalace drawers or `raw/` files.
 | Cross-topic link | Tunnel | Same room across wings |
 
 When creating wiki articles, use the same naming as MemPalace rooms. `wiki/decisions/auth-approach.md` maps to `room_auth-approach` in L2. This makes cross-referencing seamless.
+
+### Recommended MemPalace Room Structure
+
+Organize L2 into topical rooms:
+
+```
+mempalace/
+├── domain/       # Domain knowledge, industry context
+├── product/      # Product decisions, features, roadmap
+├── tech/         # Architecture, infrastructure, stack
+├── compliance/   # Regulations, legal, standards
+├── market/       # Market research, competitors
+├── people/       # Stakeholders, team, contacts
+└── decisions/    # ADRs — numbered, dated, never deleted
+```
+
+Each file = one topic. `index.md` at the root lists all rooms and files.
 
 ---
 
@@ -189,6 +219,18 @@ mempalace_kg_timeline(entity="auth-migration")
 ```
 
 When answering, draw from both L1 (curated knowledge) and L2 (raw history) to give complete answers with full context.
+
+---
+
+## Index Sync (Hard Rule)
+
+Index files are load-bearing. When you add, rename, or remove any wiki article or MemPalace room:
+
+1. **Update `wiki/index.md`** — add/update the entry with filename, description, and triggers
+2. **Update `mempalace/index.md`** (if using structured rooms) — keep the Palace Map in sync
+3. **Do both in the same commit as the file change.** Never leave indices stale.
+
+If you realize an index is out of sync — fix it immediately, don't defer.
 
 ---
 
